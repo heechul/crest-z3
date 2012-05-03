@@ -16,11 +16,17 @@
 #include <utility>
 #include <yices_c.h>
 
+
 #include "base/yices_solver.h"
 
 using std::make_pair;
 using std::queue;
 using std::set;
+
+#define USE_Z3 1
+#if USE_Z3
+#  include <z3.h>
+#endif
 
 namespace crest {
 
@@ -94,6 +100,7 @@ bool YicesSolver::IncrementalSolve(const vector<value_t>& old_soln,
 }
 
 
+#if !USE_Z3
 bool YicesSolver::Solve(const map<var_t,type_t>& vars,
 			const vector<const SymbolicPred*>& constraints,
 			map<var_t,value_t>* soln) {
@@ -107,6 +114,7 @@ bool YicesSolver::Solve(const map<var_t,type_t>& vars,
   // Type limits.
   vector<yices_expr> min_expr(types::LONG_LONG+1);
   vector<yices_expr> max_expr(types::LONG_LONG+1);
+
   for (int i = types::U_CHAR; i <= types::LONG_LONG; i++) {
     min_expr[i] = yices_mk_num_from_string(ctx, const_cast<char*>(kMinValueStr[i]));
     max_expr[i] = yices_mk_num_from_string(ctx, const_cast<char*>(kMaxValueStr[i]));
@@ -206,7 +214,192 @@ bool YicesSolver::Solve(const map<var_t,type_t>& vars,
   yices_del_context(ctx);
   return success;
 }
+#else /* USE_Z3 */
 
+/**
+   \brief exit gracefully in case of error.
+*/
+void exitf(const char* message) 
+{
+  fprintf(stderr,"BUG: %s.\n", message);
+  exit(1);
+}
+
+/**
+   \brief Simpler error handler.
+ */
+void error_handler(Z3_error_code e) 
+{
+  printf("Error code: %d\n", e);
+  exitf("incorrect use of Z3");
+}
+
+/**
+   \brief Create a logical context.  
+
+   Enable model construction. Other configuration parameters can be passed in the cfg variable.
+
+   Also enable tracing to stderr and register custom error handler.
+*/
+static Z3_context mk_context_custom(Z3_config cfg, Z3_error_handler err) 
+{
+    Z3_context ctx;
+    
+    Z3_set_param_value(cfg, "MODEL", "true");
+    ctx = Z3_mk_context(cfg);
+#ifdef TRACING
+    Z3_trace_to_stderr(ctx);
+#endif
+    Z3_set_error_handler(ctx, err);
+    
+    return ctx;
+}
+
+/**
+   \brief Create a logical context.
+
+   Enable model construction only.
+
+   Also enable tracing to stderr and register standard error handler.
+*/
+static Z3_context mk_context() 
+{
+    Z3_config  cfg;
+    Z3_context ctx;
+    cfg = Z3_mk_config();
+    ctx = mk_context_custom(cfg, error_handler);
+    Z3_del_config(cfg);
+    return ctx;
+}
+
+bool YicesSolver::Solve(const map<var_t,type_t>& vars,
+			const vector<const SymbolicPred*>& constraints,
+			map<var_t,value_t>* soln) {
+
+  typedef map<var_t,type_t>::const_iterator VarIt;
+
+  yices_enable_log_file("yices_log");
+  yices_context ctx = yices_mk_context();
+
+  Z3_context ctx_z3 = mk_context();
+  Z3_sort int_sort;
+
+  assert(ctx);
+
+  // Type limits.
+  vector<yices_expr> min_expr(types::LONG_LONG+1);
+  vector<yices_expr> max_expr(types::LONG_LONG+1);
+
+  vector<Z3_ast> min_expr_z3(types::LONG_LONG+1);
+  vector<Z3_ast> max_expr_z3(types::LONG_LONG+1);
+
+  int_sort   = Z3_mk_int_sort(ctx_z3);
+
+  for (int i = types::U_CHAR; i <= types::LONG_LONG; i++) {
+    min_expr[i] = yices_mk_num_from_string(ctx, const_cast<char*>(kMinValueStr[i]));
+    max_expr[i] = yices_mk_num_from_string(ctx, const_cast<char*>(kMaxValueStr[i]));
+
+    min_expr_z3[i] = Z3_mk_numeral(ctx_z3, const_cast<char*>(kMinValueStr[i]), int_sort);
+    max_expr_z3[i] = Z3_mk_numeral(ctx_z3, const_cast<char*>(kMaxValueStr[i]), int_sort);
+    
+    assert(min_expr[i]);
+    assert(max_expr[i]);
+  }
+
+  char int_ty_name[] = "int";
+  fprintf(stderr, "yices_mk_mk_type(ctx, int_ty_name)\n");
+  yices_type int_ty = yices_mk_type(ctx, int_ty_name);
+
+  assert(int_ty);
+
+  // Variable declarations.
+  map<var_t,yices_var_decl> x_decl;
+  map<var_t,yices_expr> x_expr;
+  for (VarIt i = vars.begin(); i != vars.end(); ++i) {
+    char buff[32];
+    snprintf(buff, sizeof(buff), "x%d", i->first);
+    fprintf(stderr, "yices_mk_var_decl(ctx, buff, int_ty)\n");
+    x_decl[i->first] = yices_mk_var_decl(ctx, buff, int_ty);
+    fprintf(stderr, "yices_mk_var_from_decl(ctx, x_decl[i->first])\n");
+    x_expr[i->first] = yices_mk_var_from_decl(ctx, x_decl[i->first]);
+    assert(x_decl[i->first]);
+    assert(x_expr[i->first]);
+    fprintf(stderr, "yices_assert(ctx, yices_mk_ge(ctx, x_expr[i->first], min_expr[i->second]))\n");
+    yices_assert(ctx, yices_mk_ge(ctx, x_expr[i->first], min_expr[i->second]));
+    fprintf(stderr, "yices_assert(ctx, yices_mk_le(ctx, x_expr[i->first], max_expr[i->second]))\n");
+    yices_assert(ctx, yices_mk_le(ctx, x_expr[i->first], max_expr[i->second]));
+  }
+
+  fprintf(stderr, "yices_mk_num(ctx, 0)\n");
+  yices_expr zero = yices_mk_num(ctx, 0);
+  assert(zero);
+
+  { // Constraints.
+    vector<yices_expr> terms;
+    for (PredIt i = constraints.begin(); i != constraints.end(); ++i) {
+      const SymbolicExpr& se = (*i)->expr();
+#if 1
+      string s = "";
+      se.AppendToString(&s);
+      fprintf(stderr, "%s ", s.c_str());
+#endif
+      terms.clear();
+      terms.push_back(yices_mk_num(ctx, se.const_term()));
+      for (SymbolicExpr::TermIt j = se.terms().begin(); j != se.terms().end(); ++j) {
+	yices_expr prod[2] = { x_expr[j->first], yices_mk_num(ctx, j->second) };
+	terms.push_back(yices_mk_mul(ctx, prod, 2));
+      }
+      yices_expr e = yices_mk_sum(ctx, &terms.front(), terms.size());
+
+      yices_expr pred;
+      switch((*i)->op()) {
+      case ops::EQ:  
+	pred = yices_mk_eq(ctx, e, zero); 
+	fprintf(stderr, "==\n");
+	break;
+      case ops::NEQ: 
+	pred = yices_mk_diseq(ctx, e, zero); 
+	fprintf(stderr, "!=\n");
+	break;
+      case ops::GT:  
+	pred = yices_mk_gt(ctx, e, zero); 
+	fprintf(stderr, ">\n");
+	break;
+      case ops::LE:  
+	pred = yices_mk_le(ctx, e, zero); 
+	fprintf(stderr, "<=\n");
+	break;
+      case ops::LT:  
+	pred = yices_mk_lt(ctx, e, zero); 
+	fprintf(stderr, "<\n");
+	break;
+      case ops::GE:  
+	pred = yices_mk_ge(ctx, e, zero); 
+	fprintf(stderr, ">=\n");
+	break;
+      default:
+	fprintf(stderr, "Unknown comparison operator: %d\n", (*i)->op());
+	exit(1);
+      }
+      yices_assert(ctx, pred);
+    }
+  }
+
+  bool success = (yices_check(ctx) == l_true);
+  if (success) {
+    soln->clear();
+    yices_model model = yices_get_model(ctx);
+    for (VarIt i = vars.begin(); i != vars.end(); ++i) {
+      long val;
+      assert(yices_get_int_value(model, x_decl[i->first], &val));
+      soln->insert(make_pair(i->first, val));
+    }
+  }
+
+  yices_del_context(ctx);
+  return success;
+}
+#endif /* USE_Z3 */
 
 }  // namespace crest
 
