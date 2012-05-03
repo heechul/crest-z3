@@ -123,7 +123,7 @@ bool YicesSolver::Solve(const map<var_t,type_t>& vars,
   }
 
   char int_ty_name[] = "int";
-  fprintf(stderr, "yices_mk_mk_type(ctx, int_ty_name)\n");
+  // fprintf(stderr, "yices_mk_mk_type(ctx, int_ty_name)\n");
   yices_type int_ty = yices_mk_type(ctx, int_ty_name);
   assert(int_ty);
 
@@ -134,25 +134,24 @@ bool YicesSolver::Solve(const map<var_t,type_t>& vars,
   for (VarIt i = vars.begin(); i != vars.end(); ++i) {
     char buff[32];
     snprintf(buff, sizeof(buff), "x%d", i->first);
-    fprintf(stderr, "yices_mk_var_decl(ctx, buff, int_ty)\n");
+    // fprintf(stderr, "yices_mk_var_decl(ctx, buff, int_ty)\n");
     x_decl[i->first] = yices_mk_var_decl(ctx, buff, int_ty);
-    fprintf(stderr, "yices_mk_var_from_decl(ctx, x_decl[i->first])\n");
+    // fprintf(stderr, "yices_mk_var_from_decl(ctx, x_decl[i->first])\n");
     x_expr[i->first] = yices_mk_var_from_decl(ctx, x_decl[i->first]);
     assert(x_decl[i->first]);
     assert(x_expr[i->first]);
-    fprintf(stderr, "yices_assert(ctx, yices_mk_ge(ctx, x_expr[i->first], min_expr[i->second]))\n");
+    // fprintf(stderr, "yices_assert(ctx, yices_mk_ge(ctx, x_expr[i->first], min_expr[i->second]))\n");
     yices_assert(ctx, yices_mk_ge(ctx, x_expr[i->first], min_expr[i->second]));
-    fprintf(stderr, "yices_assert(ctx, yices_mk_le(ctx, x_expr[i->first], max_expr[i->second]))\n");
+    // fprintf(stderr, "yices_assert(ctx, yices_mk_le(ctx, x_expr[i->first], max_expr[i->second]))\n");
     yices_assert(ctx, yices_mk_le(ctx, x_expr[i->first], max_expr[i->second]));
   }
 
-  fprintf(stderr, "yices_mk_num(ctx, 0)\n");
+  // fprintf(stderr, "yices_mk_num(ctx, 0)\n");
   yices_expr zero = yices_mk_num(ctx, 0);
   assert(zero);
 
   { // Constraints.
     vector<yices_expr> terms;
-    vector<Z3_ast> terms_z3;
 
     for (PredIt i = constraints.begin(); i != constraints.end(); ++i) {
       const SymbolicExpr& se = (*i)->expr();
@@ -208,12 +207,19 @@ bool YicesSolver::Solve(const map<var_t,type_t>& vars,
   if (success) {
     soln->clear();
     yices_model model = yices_get_model(ctx);
+
+    if (model == NULL) {
+      fprintf(stderr, "ERR: Can't get model...\n");
+      goto out;
+    }
+
     for (VarIt i = vars.begin(); i != vars.end(); ++i) {
       long val;
       assert(yices_get_int_value(model, x_decl[i->first], &val));
       soln->insert(make_pair(i->first, val));
     }
   }
+ out:
 
   yices_del_context(ctx);
   return success;
@@ -236,6 +242,14 @@ void error_handler(Z3_error_code e)
 {
   printf("Error code: %d\n", e);
   exitf("incorrect use of Z3");
+}
+
+/**
+   \brief exit if unreachable code was reached.
+*/
+void unreachable() 
+{
+    exitf("unreachable code was reached");
 }
 
 /**
@@ -332,6 +346,123 @@ void check(Z3_context ctx, Z3_lbool expected_result)
     }
 }
 
+/**
+   \brief Display a symbol in the given output stream.
+*/
+void display_symbol(Z3_context c, FILE * out, Z3_symbol s) 
+{
+    switch (Z3_get_symbol_kind(c, s)) {
+    case Z3_INT_SYMBOL:
+        fprintf(out, "#%d", Z3_get_symbol_int(c, s));
+        break;
+    case Z3_STRING_SYMBOL:
+        fprintf(out, Z3_get_symbol_string(c, s));
+        break;
+    default:
+        unreachable();
+    }
+}
+
+/**
+   \brief Display the given type.
+*/
+void display_sort(Z3_context c, FILE * out, Z3_sort ty) 
+{
+    switch (Z3_get_sort_kind(c, ty)) {
+    case Z3_UNINTERPRETED_SORT:
+        display_symbol(c, out, Z3_get_sort_name(c, ty));
+        break;
+    case Z3_BOOL_SORT:
+        fprintf(out, "bool");
+        break;
+    case Z3_INT_SORT:
+        fprintf(out, "int");
+        break;
+    case Z3_REAL_SORT:
+        fprintf(out, "real");
+        break;
+    case Z3_BV_SORT:
+        fprintf(out, "bv%d", Z3_get_bv_sort_size(c, ty));
+        break;
+    case Z3_ARRAY_SORT: 
+        fprintf(out, "[");
+        display_sort(c, out, Z3_get_array_sort_domain(c, ty));
+        fprintf(out, "->");
+        display_sort(c, out, Z3_get_array_sort_range(c, ty));
+        fprintf(out, "]");
+        break;
+    case Z3_DATATYPE_SORT:
+		if (Z3_get_datatype_sort_num_constructors(c, ty) != 1) 
+		{
+			fprintf(out, "%s", Z3_sort_to_string(c,ty));
+			break;
+		}
+		{
+        unsigned num_fields = Z3_get_tuple_sort_num_fields(c, ty);
+        unsigned i;
+        fprintf(out, "(");
+        for (i = 0; i < num_fields; i++) {
+            Z3_func_decl field = Z3_get_tuple_sort_field_decl(c, ty, i);
+            if (i > 0) {
+                fprintf(out, ", ");
+            }
+            display_sort(c, out, Z3_get_range(c, field));
+        }
+        fprintf(out, ")");
+        break;
+    }
+    default:
+        fprintf(out, "unknown[");
+        display_symbol(c, out, Z3_get_sort_name(c, ty));
+        fprintf(out, "]");
+        break;
+    }
+}
+
+/**
+   \brief Custom ast pretty printer. 
+
+   This function demonstrates how to use the API to navigate terms.
+*/
+void display_ast(Z3_context c, FILE * out, Z3_ast v) 
+{
+    switch (Z3_get_ast_kind(c, v)) {
+    case Z3_NUMERAL_AST: {
+        Z3_sort t;
+        fprintf(out, Z3_get_numeral_string(c, v));
+        t = Z3_get_sort(c, v);
+        fprintf(out, ":");
+        display_sort(c, out, t);
+        break;
+    }
+    case Z3_APP_AST: {
+        unsigned i;
+        Z3_app app = Z3_to_app(c, v);
+        unsigned num_fields = Z3_get_app_num_args(c, app);
+        Z3_func_decl d = Z3_get_app_decl(c, app);
+        fprintf(out, Z3_func_decl_to_string(c, d));
+        if (num_fields > 0) {
+            fprintf(out, "[");
+            for (i = 0; i < num_fields; i++) {
+                if (i > 0) {
+                    fprintf(out, ", ");
+                }
+                display_ast(c, out, Z3_get_app_arg(c, app, i));
+            }
+            fprintf(out, "]");
+        }
+        break;
+    }
+    case Z3_QUANTIFIER_AST: {
+        fprintf(out, "quantifier");
+        ;	
+    }
+    default:
+        fprintf(out, "#unknown");
+    }
+}
+
+
 bool YicesSolver::Solve(const map<var_t,type_t>& vars,
 			const vector<const SymbolicPred*>& constraints,
 			map<var_t,value_t>* soln) {
@@ -365,7 +496,7 @@ bool YicesSolver::Solve(const map<var_t,type_t>& vars,
   }
 
   char int_ty_name[] = "int";
-  fprintf(stderr, "yices_mk_mk_type(ctx, int_ty_name)\n");
+  // fprintf(stderr, "yices_mk_mk_type(ctx, int_ty_name)\n");
   yices_type int_ty = yices_mk_type(ctx, int_ty_name);
 
   assert(int_ty);
@@ -380,15 +511,15 @@ bool YicesSolver::Solve(const map<var_t,type_t>& vars,
     char buff[32];
     snprintf(buff, sizeof(buff), "x%d", i->first);
 
-    fprintf(stderr, "yices_mk_var_decl(ctx, buff, int_ty)\n");
+    // fprintf(stderr, "yices_mk_var_decl(ctx, buff, int_ty)\n");
     x_decl[i->first] = yices_mk_var_decl(ctx, buff, int_ty);
-    fprintf(stderr, "yices_mk_var_from_decl(ctx, x_decl[i->first])\n");
+    // fprintf(stderr, "yices_mk_var_from_decl(ctx, x_decl[i->first])\n");
     x_expr[i->first] = yices_mk_var_from_decl(ctx, x_decl[i->first]);
     assert(x_decl[i->first]);
     assert(x_expr[i->first]);
-    fprintf(stderr, "yices_assert(ctx, yices_mk_ge(ctx, x_expr[i->first], min_expr[i->second]))\n");
+    // fprintf(stderr, "yices_assert(ctx, yices_mk_ge(ctx, x_expr[i->first], min_expr[i->second]))\n");
     yices_assert(ctx, yices_mk_ge(ctx, x_expr[i->first], min_expr[i->second]));
-    fprintf(stderr, "yices_assert(ctx, yices_mk_le(ctx, x_expr[i->first], max_expr[i->second]))\n");
+    // fprintf(stderr, "yices_assert(ctx, yices_mk_le(ctx, x_expr[i->first], max_expr[i->second]))\n");
     yices_assert(ctx, yices_mk_le(ctx, x_expr[i->first], max_expr[i->second]));
 
     x_expr_z3[i->first] = mk_var(ctx_z3, buff, int_ty_z3);
@@ -396,7 +527,7 @@ bool YicesSolver::Solve(const map<var_t,type_t>& vars,
     Z3_assert_cnstr(ctx_z3, Z3_mk_le(ctx_z3, x_expr_z3[i->first], max_expr_z3[i->second]));
   }
 
-  fprintf(stderr, "yices_mk_num(ctx, 0)\n");
+  // fprintf(stderr, "yices_mk_num(ctx, 0)\n");
   yices_expr zero = yices_mk_num(ctx, 0);
 
   Z3_ast zero_z3 = mk_int(ctx_z3, 0);
@@ -428,10 +559,9 @@ bool YicesSolver::Solve(const map<var_t,type_t>& vars,
 	terms_z3.push_back(Z3_mk_mul(ctx_z3, 2, prod_z3));
       }
       yices_expr e = yices_mk_sum(ctx, &terms.front(), terms.size());
+      yices_expr pred;
 
       Z3_ast e_z3 = Z3_mk_add(ctx_z3, terms_z3.size(), &terms_z3.front());
-
-      yices_expr pred;
       Z3_ast pred_z3;
 
       switch((*i)->op()) {
@@ -478,18 +608,55 @@ bool YicesSolver::Solve(const map<var_t,type_t>& vars,
 
   bool success = (yices_check(ctx) == l_true);
 
-  check(ctx_z3, (success) ? Z3_L_TRUE : Z3_L_FALSE);
+  Z3_model model_z3 = 0;
+  Z3_lbool success_z3 = Z3_check_and_get_model(ctx_z3, &model_z3);
+
+  if (success != (success_z3 == Z3_L_TRUE)) {
+    fprintf(stderr, "ERR: Two are different. yices=%d, z3=%d\n\n\n", 
+	    success, success_z3);
+  }
 
   if (success) {
     soln->clear();
     yices_model model = yices_get_model(ctx);
+    
+    if (model == NULL) {
+      fprintf(stderr, "ERR: Can't get model...\n");
+      goto out;
+    }
     for (VarIt i = vars.begin(); i != vars.end(); ++i) {
       long val;
       assert(yices_get_int_value(model, x_decl[i->first], &val));
+      
       soln->insert(make_pair(i->first, val));
+
+      fprintf(stderr, "yices: insert x%d %d\n", i->first, val);
     }
   }
 
+  if (success_z3 == Z3_L_TRUE) {
+    int num_constraints = Z3_get_model_num_constants(ctx_z3, model_z3);
+    for (int i = 0; i < num_constraints; i++) {
+        Z3_symbol name;
+        Z3_func_decl cnst = Z3_get_model_constant(ctx_z3, model_z3, i);
+        Z3_ast a, v;
+        Z3_bool ok;
+        name = Z3_get_decl_name(ctx_z3, cnst);
+        a = Z3_mk_app(ctx_z3, cnst, 0, 0);
+        v = a;
+        ok = Z3_eval(ctx_z3, model_z3, a, &v);
+	int idx;
+	sscanf(Z3_get_symbol_string(ctx_z3, name), "x%d", &idx);
+	long val = strtol(Z3_get_numeral_string(ctx_z3, v), NULL, 0);
+	fprintf(stderr, "%s %s | x%d %ld\n", 
+		Z3_get_symbol_string(ctx_z3, name),
+		Z3_get_numeral_string(ctx_z3, v), 
+		idx, val);
+    }
+  }
+
+
+ out:
   yices_del_context(ctx);
 
   Z3_del_context(ctx_z3);
