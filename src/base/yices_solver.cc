@@ -100,7 +100,7 @@ bool YicesSolver::Solve(const map<var_t,type_t>& vars,
 
   typedef map<var_t,type_t>::const_iterator VarIt;
 
-  // yices_enable_log_file("yices_log");
+  yices_enable_log_file("yices_log");
   yices_context ctx = yices_mk_context();
   assert(ctx);
 
@@ -115,7 +115,7 @@ bool YicesSolver::Solve(const map<var_t,type_t>& vars,
   }
 
   char int_ty_name[] = "int";
-  // fprintf(stderr, "yices_mk_mk_type(ctx, int_ty_name)\n");
+  fprintf(stderr, "yices_mk_mk_type(ctx, int_ty_name)\n");
   yices_type int_ty = yices_mk_type(ctx, int_ty_name);
   assert(int_ty);
 
@@ -125,19 +125,19 @@ bool YicesSolver::Solve(const map<var_t,type_t>& vars,
   for (VarIt i = vars.begin(); i != vars.end(); ++i) {
     char buff[32];
     snprintf(buff, sizeof(buff), "x%d", i->first);
-    // fprintf(stderr, "yices_mk_var_decl(ctx, buff, int_ty)\n");
+    fprintf(stderr, "yices_mk_var_decl(ctx, buff, int_ty)\n");
     x_decl[i->first] = yices_mk_var_decl(ctx, buff, int_ty);
-    // fprintf(stderr, "yices_mk_var_from_decl(ctx, x_decl[i->first])\n");
+    fprintf(stderr, "yices_mk_var_from_decl(ctx, x_decl[i->first])\n");
     x_expr[i->first] = yices_mk_var_from_decl(ctx, x_decl[i->first]);
     assert(x_decl[i->first]);
     assert(x_expr[i->first]);
-    // fprintf(stderr, "yices_assert(ctx, yices_mk_ge(ctx, x_expr[i->first], min_expr[i->second]))\n");
+    fprintf(stderr, "yices_assert(ctx, yices_mk_ge(ctx, x_expr[i->first], min_expr[i->second]))\n");
     yices_assert(ctx, yices_mk_ge(ctx, x_expr[i->first], min_expr[i->second]));
-    // fprintf(stderr, "yices_assert(ctx, yices_mk_le(ctx, x_expr[i->first], max_expr[i->second]))\n");
+    fprintf(stderr, "yices_assert(ctx, yices_mk_le(ctx, x_expr[i->first], max_expr[i->second]))\n");
     yices_assert(ctx, yices_mk_le(ctx, x_expr[i->first], max_expr[i->second]));
   }
 
-  // fprintf(stderr, "yices_mk_num(ctx, 0)\n");
+  fprintf(stderr, "yices_mk_num(ctx, 0)\n");
   yices_expr zero = yices_mk_num(ctx, 0);
   assert(zero);
 
@@ -145,6 +145,11 @@ bool YicesSolver::Solve(const map<var_t,type_t>& vars,
     vector<yices_expr> terms;
     for (PredIt i = constraints.begin(); i != constraints.end(); ++i) {
       const SymbolicExpr& se = (*i)->expr();
+#if 1
+      string s = "";
+      se.AppendToString(&s);
+      fprintf(stderr, "%s ", s.c_str());
+#endif
       terms.clear();
       terms.push_back(yices_mk_num(ctx, se.const_term()));
       for (SymbolicExpr::TermIt j = se.terms().begin(); j != se.terms().end(); ++j) {
@@ -155,12 +160,30 @@ bool YicesSolver::Solve(const map<var_t,type_t>& vars,
 
       yices_expr pred;
       switch((*i)->op()) {
-      case ops::EQ:  pred = yices_mk_eq(ctx, e, zero); break;
-      case ops::NEQ: pred = yices_mk_diseq(ctx, e, zero); break;
-      case ops::GT:  pred = yices_mk_gt(ctx, e, zero); break;
-      case ops::LE:  pred = yices_mk_le(ctx, e, zero); break;
-      case ops::LT:  pred = yices_mk_lt(ctx, e, zero); break;
-      case ops::GE:  pred = yices_mk_ge(ctx, e, zero); break;
+      case ops::EQ:  
+	pred = yices_mk_eq(ctx, e, zero); 
+	fprintf(stderr, "==\n");
+	break;
+      case ops::NEQ: 
+	pred = yices_mk_diseq(ctx, e, zero); 
+	fprintf(stderr, "!=\n");
+	break;
+      case ops::GT:  
+	pred = yices_mk_gt(ctx, e, zero); 
+	fprintf(stderr, ">\n");
+	break;
+      case ops::LE:  
+	pred = yices_mk_le(ctx, e, zero); 
+	fprintf(stderr, "<=\n");
+	break;
+      case ops::LT:  
+	pred = yices_mk_lt(ctx, e, zero); 
+	fprintf(stderr, "<\n");
+	break;
+      case ops::GE:  
+	pred = yices_mk_ge(ctx, e, zero); 
+	fprintf(stderr, ">=\n");
+	break;
       default:
 	fprintf(stderr, "Unknown comparison operator: %d\n", (*i)->op());
 	exit(1);

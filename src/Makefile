@@ -1,17 +1,17 @@
 
-YICES_DIR=$(HOME)/Papers/cs523/crest-z3/yices-1.0.34/
+YICES_DIR=$(HOME)/Projects/crest-z3/yices-1.0.34
 
 CC=gcc
 CXX=g++ # $(CXX)
 CFLAGS = -I. -I$(YICES_DIR)/include -Wall -O2 -g
 CXXFLAGS = $(CFLAGS)
 LDFLAGS = -L$(YICES_DIR)/lib
-LOADLIBES = -lyices -ldl -lpthread 
+LOADLIBES = -lyices -ldl -lpthread
 
 BASE_LIBS = base/basic_types.o base/symbolic_execution.o \
             base/symbolic_interpreter.o base/symbolic_path.o \
             base/symbolic_predicate.o base/symbolic_expression.o \
-            base/yices_solver.o 
+            base/yices_solver.o
 
 
 all: libcrest/libcrest.a run_crest/run_crest \
