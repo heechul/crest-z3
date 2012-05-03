@@ -628,7 +628,7 @@ bool YicesSolver::Solve(const map<var_t,type_t>& vars,
       long val;
       assert(yices_get_int_value(model, x_decl[i->first], &val));
       
-      soln->insert(make_pair(i->first, val));
+      // soln->insert(make_pair(i->first, val));
 
       fprintf(stderr, "yices: insert x%d %d\n", i->first, val);
     }
@@ -652,6 +652,7 @@ bool YicesSolver::Solve(const map<var_t,type_t>& vars,
 		Z3_get_symbol_string(ctx_z3, name),
 		Z3_get_numeral_string(ctx_z3, v), 
 		idx, val);
+	soln->insert(make_pair(idx, val));
     }
   }
 
