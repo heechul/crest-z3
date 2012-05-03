@@ -441,9 +441,11 @@ bool YicesSolver::Solve(const map<var_t,type_t>& vars,
 	fprintf(stderr, "==\n");
 	break;
       case ops::NEQ: 
-	pred = yices_mk_diseq(ctx, e, zero); 
-	pred_z3 = Z3_mk_eq(ctx_z3, Z3_mk_not(ctx_z3, e_z3), zero_z3);
 	fprintf(stderr, "!=\n");
+	pred = yices_mk_diseq(ctx, e, zero); 
+	// fprintf(stderr, "neq: ast %s\n", Z3_ast_to_string(ctx_z3, e_z3));
+	// fprintf(stderr, "neq: sort %s\n", Z3_sort_to_string(ctx_z3, int_ty_z3));
+	pred_z3 = Z3_mk_not(ctx_z3, Z3_mk_eq(ctx_z3, e_z3, zero_z3));
 	break;
       case ops::GT:  
 	pred = yices_mk_gt(ctx, e, zero); 
