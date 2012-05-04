@@ -10,13 +10,18 @@
 
 #include "base/symbolic_predicate.h"
 
+#include <stdio.h>
+
+#define DEBUG(x) x
+
 namespace crest {
 
 SymbolicPred::SymbolicPred()
   : op_(ops::EQ), expr_(new SymbolicExpr(0)) { }
 
 SymbolicPred::SymbolicPred(compare_op_t op, SymbolicExpr* expr)
-  : op_(op), expr_(expr) { }
+  : op_(op), expr_(expr) { 
+}
 
 SymbolicPred::~SymbolicPred() {
   delete expr_;
@@ -27,22 +32,29 @@ void SymbolicPred::Negate() {
 }
 
 void SymbolicPred::AppendToString(string* s) const {
-  const char* symbol[] = { "=", "/=", ">", "<=", "<", ">=" };
-  s->push_back('(');
-  s->append(symbol[op_]);
-  s->push_back(' ');
-  expr_->AppendToString(s);
-  s->append(" 0)");
+  const char* symbol[] = { "= ", "/=", "> ", "<=", "< ", ">=" };
+
+  /* for Z3 which does not support /= */
+  if (op_ == ops::NEQ)
+    s->append( "(not (=  " + expr_->get_expr_str() + " 0 ) )");
+  else 
+    s->append( "(" + string(symbol[op_]) + " " + expr_->get_expr_str() + " 0 )");
 }
 
 void SymbolicPred::Serialize(string* s) const {
-  s->push_back(static_cast<char>(op_));
+  char buf[8];
+  sprintf(buf, "%d\n", op_);
+  s->append(string(buf));
+  DEBUG(fprintf(stderr, "%s: op_=%d\n", __FUNCTION__, op_));
   expr_->Serialize(s);
 }
 
 bool SymbolicPred::Parse(istream& s) {
-  op_ = static_cast<compare_op_t>(s.get());
-  return (expr_->Parse(s) && !s.fail());
+  char buf[8];
+  s.getline(buf, 8);
+  sscanf(buf, "%d", &op_);
+  DEBUG(fprintf(stderr, "%s: op_=%d\n", __FUNCTION__, op_));
+  expr_->Parse(s);
 }
 
 bool SymbolicPred::Equal(const SymbolicPred& p) const {

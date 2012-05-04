@@ -218,7 +218,7 @@ void Search::RunProgram(const vector<value_t>& inputs, SymbolicExecution* ex) {
   fprintf(stderr, "\n");
   */
 }
-
+  
 
 bool Search::UpdateCoverage(const SymbolicExecution& ex) {
   return UpdateCoverage(ex, NULL);
@@ -311,9 +311,9 @@ bool Search::SolveAtBranch(const SymbolicExecution& ex,
 				 constraints.begin()+branch_idx+1);
   map<var_t,value_t> soln;
   constraints[branch_idx]->Negate();
-  // fprintf(stderr, "Yices . . . ");
+  fprintf(stderr, "Yices . . . ");
   bool success = YicesSolver::IncrementalSolve(ex.inputs(), ex.vars(), cs, &soln);
-  // fprintf(stderr, "%d\n", success);
+  fprintf(stderr, "%d\n", success);
   constraints[branch_idx]->Negate();
 
   if (success) {

@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include "base/symbolic_expression.h"
 
+#define DEBUG(x) x
+
 namespace crest {
 
 typedef map<var_t,value_t>::iterator It;
@@ -26,17 +28,19 @@ SymbolicExpr::SymbolicExpr(value_t c) : const_(c) { }
 
 SymbolicExpr::SymbolicExpr(value_t c, var_t v) : const_(0) {
   coeff_[v] = c;
+
+  char tmp[128];
+  sprintf(tmp, "x%d", v);
+  expr_str_ = tmp;
 }
 
 SymbolicExpr::SymbolicExpr(const SymbolicExpr& e)
-  : const_(e.const_), coeff_(e.coeff_) { }
+  : const_(e.const_), coeff_(e.coeff_), expr_str_(e.expr_str_) { }
 
 
 void SymbolicExpr::Negate() {
   const_ = -const_;
-  for (It i = coeff_.begin(); i != coeff_.end(); ++i) {
-    i->second = -i->second;
-  }
+  expr_str_ = "( - 0 " + expr_str_ + ")";
 }
 
 
@@ -56,44 +60,33 @@ bool SymbolicExpr::DependsOn(const map<var_t,type_t>& vars) const {
 
 
 void SymbolicExpr::AppendToString(string* s) const {
-  char buff[32];
-  sprintf(buff, "(+ %lld", const_);
-  s->append(buff);
-
-  for (ConstIt i = coeff_.begin(); i != coeff_.end(); ++i) {
-    sprintf(buff, " (* %lld x%u)", i->second, i->first);
-    s->append(buff);
-  }
-
-  s->push_back(')');
+  s->append(expr_str_);
 }
 
 
 void SymbolicExpr::Serialize(string* s) const {
-  assert(coeff_.size() < 128);
-  s->push_back(static_cast<char>(coeff_.size()));
-  s->append((char*)&const_, sizeof(value_t));
-  for (ConstIt i = coeff_.begin(); i != coeff_.end(); ++i) {
-    s->append((char*)&i->first, sizeof(var_t));
-    s->append((char*)&i->second, sizeof(value_t));
-  }
+  /* write constant value */
+  s->append( expr_str_ + "\n");
+  DEBUG(fprintf(stderr, "%s: %s\n", __FUNCTION__, expr_str_.c_str() ));
 }
 
 
 bool SymbolicExpr::Parse(istream& s) {
-  size_t len = static_cast<size_t>(s.get());
-  s.read((char*)&const_, sizeof(value_t));
-  if (s.fail())
-    return false;
+  char buf[256];
 
-  coeff_.clear();
-  for (size_t i = 0; i < len; i++) {
-    var_t v;
-    value_t c;
-    s.read((char*)&v, sizeof(v));
-    s.read((char*)&c, sizeof(c));
-    coeff_[v] = c;
+  s.getline(buf, 256);
+  expr_str_ = string(buf);
+  DEBUG(fprintf(stderr, "%s: %s\n", __FUNCTION__, expr_str_.c_str() ));
+
+  for (int i = 0; i < 256 && buf[i] != '\n'; i++) {
+    if (buf[i] == 'x') {
+      int var;
+      sscanf(&buf[i+1], "%d", &var);
+      if (var >= 0 && var < 128) /* valid variable range */
+	coeff_[var] = 1;
+    }
   }
+  DEBUG(fprintf(stderr, "%s: #vars=%d\n", __FUNCTION__, coeff_.size()));
 
   return !s.fail();
 }
@@ -101,46 +94,78 @@ bool SymbolicExpr::Parse(istream& s) {
 
 const SymbolicExpr& SymbolicExpr::operator+=(const SymbolicExpr& e) {
   const_ += e.const_;
+
   for (ConstIt i = e.coeff_.begin(); i != e.coeff_.end(); ++i) {
     It j = coeff_.find(i->first);
     if (j == coeff_.end()) {
-      coeff_.insert(*i);
-    } else {
-      j->second += i->second;
-      if (j->second == 0) {
-	coeff_.erase(j);
-      }
+      coeff_[i->first] = 1;
     }
   }
+  expr_str_ = "(+ " + expr_str_ + " " + e.expr_str_ + " )";
   return *this;
 }
 
 
 const SymbolicExpr& SymbolicExpr::operator-=(const SymbolicExpr& e) {
   const_ -= e.const_;
+
   for (ConstIt i = e.coeff_.begin(); i != e.coeff_.end(); ++i) {
     It j = coeff_.find(i->first);
     if (j == coeff_.end()) {
-      coeff_[i->first] = -i->second;
-    } else {
-      j->second -= i->second;
-      if (j->second == 0) {
-	coeff_.erase(j);
-      }
+      coeff_[i->first] = 1;
     }
   }
+  expr_str_ = "(- " + expr_str_ + " " + e.expr_str_ + " )";
+  return *this;
+}
+
+const SymbolicExpr& SymbolicExpr::operator*=(const SymbolicExpr & e) {
+  const_ *= e.const_;
+
+  for (ConstIt i = e.coeff_.begin(); i != e.coeff_.end(); ++i) {
+    It j = coeff_.find(i->first);
+    if (j == coeff_.end()) {
+      coeff_[i->first] = 1;
+    }
+  }
+
+  expr_str_ = "(* " + expr_str_ + " " + e.expr_str_ + " )";
+  return *this;
+}
+
+
+const SymbolicExpr& SymbolicExpr::operator/=(const SymbolicExpr & e) {
+  const_ *= e.const_;
+
+  for (ConstIt i = e.coeff_.begin(); i != e.coeff_.end(); ++i) {
+    It j = coeff_.find(i->first);
+    if (j == coeff_.end()) {
+      coeff_[i->first] = 1;
+    }
+  }
+
+  expr_str_ = "(div " + expr_str_ + " " + e.expr_str_ + " )";
   return *this;
 }
 
 
 const SymbolicExpr& SymbolicExpr::operator+=(value_t c) {
   const_ += c;
+
+  char buf[32];
+  sprintf(buf, "%lld", c);
+  expr_str_ = "(+ " + expr_str_ + " " + string(buf) + " )";
   return *this;
 }
 
 
 const SymbolicExpr& SymbolicExpr::operator-=(value_t c) {
   const_ -= c;
+
+  char buf[32];
+  sprintf(buf, "%lld", c);
+  expr_str_ = "(- " + expr_str_ + " " + string(buf) + " )";
+
   return *this;
 }
 
@@ -149,14 +174,39 @@ const SymbolicExpr& SymbolicExpr::operator*=(value_t c) {
   if (c == 0) {
     coeff_.clear();
     const_ = 0;
-  } else {
-    const_ *= c;
-    for (It i = coeff_.begin(); i != coeff_.end(); ++i) {
-      i->second *= c;
-    }
-  }
+    expr_str_ = "";
+    return *this;
+  } 
+
+  char buf[32];
+  sprintf(buf, "%lld", c);
+  expr_str_ = "(* " + expr_str_ + " " + string(buf) + " )";
+
   return *this;
 }
+
+const SymbolicExpr& SymbolicExpr::operator/=(value_t c) {
+
+  assert(c != 0);
+
+  char buf[32];
+  sprintf(buf, "%lld", c);
+  expr_str_ = "(div " + expr_str_ + " " + string(buf) + " )";
+
+  return *this;
+}
+
+const SymbolicExpr& SymbolicExpr::operator%=(value_t c) {
+
+  assert(c != 0);
+
+  char buf[32];
+  sprintf(buf, "%lld", c);
+  expr_str_ = "(mod " + expr_str_ + " " + string(buf) + " )";
+
+  return *this;
+}
+
 
 bool SymbolicExpr::operator==(const SymbolicExpr& e) const {
   return ((const_ == e.const_) && (coeff_ == e.coeff_));

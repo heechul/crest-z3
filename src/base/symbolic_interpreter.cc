@@ -21,6 +21,8 @@ using std::make_pair;
 using std::swap;
 using std::vector;
 
+// #define DEBUG 0
+
 #ifdef DEBUG
 #define IFDEBUG(x) x
 #else
@@ -151,6 +153,8 @@ void SymbolicInterpreter::ApplyBinaryOp(id_t id, binary_op_t op, value_t value) 
   StackElem& a = *(stack_.rbegin()+1);
   StackElem& b = stack_.back();
 
+  char buf[128];
+
   if (a.expr || b.expr) {
     switch (op) {
     case ops::ADD:
@@ -163,6 +167,7 @@ void SymbolicInterpreter::ApplyBinaryOp(id_t id, binary_op_t op, value_t value) 
 	*a.expr += *b.expr;
 	delete b.expr;
       }
+      fprintf(stderr, "ApplyBinOp:+: %s\n", a.expr->get_expr_str().c_str());
       break;
 
     case ops::SUBTRACT:
@@ -176,6 +181,7 @@ void SymbolicInterpreter::ApplyBinaryOp(id_t id, binary_op_t op, value_t value) 
 	*a.expr -= *b.expr;
 	delete b.expr;
       }
+      fprintf(stderr, "ApplyBinOp:-: %s\n", a.expr->get_expr_str().c_str());
       break;
 
     case ops::SHIFT_L:
@@ -184,6 +190,7 @@ void SymbolicInterpreter::ApplyBinaryOp(id_t id, binary_op_t op, value_t value) 
         *a.expr *= (1 << b.concrete);
       }
       delete b.expr;
+      fprintf(stderr, "ApplyBinOp:<<: %s\n", a.expr->get_expr_str().c_str());
       break;
 
     case ops::MULTIPLY:
@@ -197,8 +204,12 @@ void SymbolicInterpreter::ApplyBinaryOp(id_t id, binary_op_t op, value_t value) 
 	*a.expr *= b.concrete;
 	delete b.expr;
       }
+      fprintf(stderr, "ApplyBinOp:*: %s\n", a.expr->get_expr_str().c_str());
       break;
-
+    case ops::DIVIDE:
+      break;
+    case ops::MOD:
+      break;
     default:
       // Concrete operator.
       delete a.expr;
@@ -236,6 +247,9 @@ void SymbolicInterpreter::ApplyCompareOp(id_t id, compare_op_t op, value_t value
     // store it in the predicate register.
     if (!a.expr->IsConcrete()) {
       pred_ = new SymbolicPred(op, a.expr);
+      string s = "";
+      pred_->AppendToString(&s);
+      IFDEBUG(fprintf(stderr, "ApplyCompareOp:newpred: %s\n", s.c_str()));
     } else {
       ClearPredicateRegister();
       delete a.expr;
