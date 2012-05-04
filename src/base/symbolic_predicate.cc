@@ -12,7 +12,7 @@
 
 #include <stdio.h>
 
-#define DEBUG(x) x
+#define DEBUG(x) 
 
 namespace crest {
 

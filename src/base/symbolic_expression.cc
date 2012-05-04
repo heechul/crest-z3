@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include "base/symbolic_expression.h"
 
-#define DEBUG(x) x
+#define DEBUG(x) 
 
 namespace crest {
 

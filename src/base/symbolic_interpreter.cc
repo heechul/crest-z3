@@ -207,8 +207,30 @@ void SymbolicInterpreter::ApplyBinaryOp(id_t id, binary_op_t op, value_t value) 
       fprintf(stderr, "ApplyBinOp:*: %s\n", a.expr->get_expr_str().c_str());
       break;
     case ops::DIVIDE:
+      if (a.expr == NULL) {
+	swap(a, b);
+	*a.expr /= b.concrete;
+      } else if (b.expr == NULL) {
+	*a.expr /= b.concrete;
+      } else {
+	swap(a, b);
+	*a.expr /= b.concrete;
+	delete b.expr;
+      }
+      fprintf(stderr, "ApplyBinOp:*: %s\n", a.expr->get_expr_str().c_str());
       break;
     case ops::MOD:
+      if (a.expr == NULL) {
+	swap(a, b);
+	*a.expr %= b.concrete;
+      } else if (b.expr == NULL) {
+	*a.expr %= b.concrete;
+      } else {
+	swap(a, b);
+	*a.expr %= b.concrete;
+	delete b.expr;
+      }
+      fprintf(stderr, "ApplyBinOp:*: %s\n", a.expr->get_expr_str().c_str());
       break;
     default:
       // Concrete operator.
