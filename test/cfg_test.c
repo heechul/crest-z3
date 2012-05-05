@@ -56,14 +56,20 @@ int main(void) {
   int a;
   CREST_int(a);
 
+
   if (a == 19) {
     printf("19\n");
   } else {
     printf("not 19\n");
   }
 
-  f(a);
+  if (a > 13) {
+    printf("greater than 13\n");
+  } else {
+    printf("not greater than 13\n");
+  }
 
+  f(a);
   g(a);
 
   if (a != 1) {

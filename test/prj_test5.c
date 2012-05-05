@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
 
 	if (x > 0) {
 		if (x/2 == 2) {
-			printf("x/2=2\n");
+			printf("GOAL\n");
 		}
 	}
 	return 0;

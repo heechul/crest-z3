@@ -7,9 +7,9 @@ int main(void) {
 	CREST_int(x);
 
 	if (x < 10) {
-		printf("x < 10\n");
+		printf("GOAL\n");
 	} else {
-		printf("x > 10\n");
+		printf("GOAL1\n");
 	}
 	return 0;
 }

@@ -311,7 +311,6 @@ bool Search::SolveAtBranch(const SymbolicExecution& ex,
 				 constraints.begin()+branch_idx+1);
   map<var_t,value_t> soln;
   constraints[branch_idx]->Negate();
-  fprintf(stderr, "Yices . . . ");
   bool success = YicesSolver::IncrementalSolve(ex.inputs(), ex.vars(), cs, &soln);
   fprintf(stderr, "%d\n", success);
   constraints[branch_idx]->Negate();

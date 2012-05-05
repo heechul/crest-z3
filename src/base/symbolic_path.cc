@@ -11,7 +11,7 @@
 #include "base/symbolic_path.h"
 #include <stdio.h>
 
-#define DEBUG(x) x
+#define DEBUG(x)
 
 namespace crest {
 

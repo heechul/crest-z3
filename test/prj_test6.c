@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
 
 	if (x > 10 && x < 20) {
 		if (x%10 == 3) {
-			printf("x%10=3, x=%d\n", x);
+			printf("GOAL\n", x);
 		}
 	}
 	return 0;

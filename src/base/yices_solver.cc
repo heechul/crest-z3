@@ -23,7 +23,7 @@ using std::make_pair;
 using std::queue;
 using std::set;
 
-#define DEBUG(x) x
+#define DEBUG(x)
 
 #define USE_Z3 1
 #if USE_Z3
@@ -41,6 +41,8 @@ bool YicesSolver::IncrementalSolve(const vector<value_t>& old_soln,
 				   map<var_t,value_t>* soln) {
   set<var_t> tmp;
   typedef set<var_t>::const_iterator VarIt;
+
+  fprintf(stderr, "M$'s Z3 SOLVER . . . ");
 
   // Build a graph on the variables, indicating a dependence when two
   // variables co-occur in a symbolic predicate.
@@ -157,13 +159,10 @@ bool YicesSolver::Solve(const map<var_t,type_t>& vars,
 
     for (PredIt i = constraints.begin(); i != constraints.end(); ++i) {
       const SymbolicExpr& se = (*i)->expr();
-#if 1
       string s = "";
       se.AppendToString(&s);
       fprintf(stderr, "%s ", s.c_str());
-#endif
 
-#if 0
       terms.clear();
       terms.push_back(yices_mk_num(ctx, se.const_term()));
 
@@ -204,11 +203,8 @@ bool YicesSolver::Solve(const map<var_t,type_t>& vars,
 	exit(1);
       }
       yices_assert(ctx, pred);
-#endif
     }
   }
-
-  exit(1); // DEBUG
 
   bool success = (yices_check(ctx) == l_true);
   if (success) {
@@ -470,6 +466,80 @@ void display_ast(Z3_context c, FILE * out, Z3_ast v)
 }
 
 
+/**
+   \brief Custom function interpretations pretty printer.
+*/
+void display_function_interpretations(Z3_context c, FILE * out, Z3_model m) 
+{
+    unsigned num_functions, i;
+
+    fprintf(out, "function interpretations:\n");
+
+    num_functions = Z3_get_model_num_funcs(c, m);
+    for (i = 0; i < num_functions; i++) {
+        Z3_func_decl fdecl;
+        Z3_symbol name;
+        Z3_ast func_else;
+        unsigned num_entries, j;
+        
+        fdecl = Z3_get_model_func_decl(c, m, i);
+        name = Z3_get_decl_name(c, fdecl);
+        display_symbol(c, out, name);
+        fprintf(out, " = {");
+        num_entries = Z3_get_model_func_num_entries(c, m, i);
+        for (j = 0; j < num_entries; j++) {
+            unsigned num_args, k;
+            if (j > 0) {
+                fprintf(out, ", ");
+            }
+            num_args = Z3_get_model_func_entry_num_args(c, m, i, j);
+            fprintf(out, "(");
+            for (k = 0; k < num_args; k++) {
+                if (k > 0) {
+                    fprintf(out, ", ");
+                }
+                display_ast(c, out, Z3_get_model_func_entry_arg(c, m, i, j, k));
+            }
+            fprintf(out, "|->");
+            display_ast(c, out, Z3_get_model_func_entry_value(c, m, i, j));
+            fprintf(out, ")");
+        }
+        if (num_entries > 0) {
+            fprintf(out, ", ");
+        }
+        fprintf(out, "(else|->");
+        func_else = Z3_get_model_func_else(c, m, i);
+        display_ast(c, out, func_else);
+        fprintf(out, ")}\n");
+    }
+}
+
+/**
+   \brief Custom model pretty printer.
+*/
+void display_model(Z3_context c, FILE * out, Z3_model m) 
+{
+    unsigned num_constants;
+    unsigned i;
+
+    num_constants = Z3_get_model_num_constants(c, m);
+    for (i = 0; i < num_constants; i++) {
+        Z3_symbol name;
+        Z3_func_decl cnst = Z3_get_model_constant(c, m, i);
+        Z3_ast a, v;
+        Z3_bool ok;
+        name = Z3_get_decl_name(c, cnst);
+        display_symbol(c, out, name);
+        fprintf(out, " = ");
+        a = Z3_mk_app(c, cnst, 0, 0);
+        v = a;
+        ok = Z3_eval(c, m, a, &v);
+        display_ast(c, out, v);
+        fprintf(out, "\n");
+    }
+    display_function_interpretations(c, out, m);
+}
+
 static Z3_ast ParseStatement(Z3_context &ctx, map<var_t,Z3_ast>& vars, string& stmt, int *pos)
 {
   Z3_ast pred[2];
@@ -520,6 +590,8 @@ static Z3_ast ParseStatement(Z3_context &ctx, map<var_t,Z3_ast>& vars, string& s
       *pos = *pos + 2;
       pred[0] = ParseStatement(ctx, vars, stmt, pos);
       pred[1] = ParseStatement(ctx, vars, stmt, pos);
+      DEBUG(fprintf(stderr, "left: %s\n", Z3_ast_to_string(ctx, pred[0])));
+      DEBUG(fprintf(stderr, "right: %s\n", Z3_ast_to_string(ctx, pred[1]))); 
       ret = Z3_mk_sub(ctx, 2, pred);
     } else if (!stmt.compare(*pos, 2, "* ")) {
       *pos = *pos + 2;
@@ -562,7 +634,7 @@ static Z3_ast ParseStatement(Z3_context &ctx, map<var_t,Z3_ast>& vars, string& s
     ret = Z3_mk_numeral(ctx, const_cast<char*>(val.c_str()), ty);
   }
 
-  DEBUG(display_ast(ctx, stderr, ret); fprintf(stderr, "\n"));
+  DEBUG(fprintf(stderr, "AST: %s\n", Z3_ast_to_string(ctx, ret)));
   return ret;
 }
 
@@ -592,16 +664,19 @@ bool YicesSolver::Solve(const map<var_t,type_t>& vars,
 
   for (VarIt i = vars.begin(); i != vars.end(); ++i) {
     char buff[32];
+    Z3_ast min, max;
     snprintf(buff, sizeof(buff), "x%d", i->first);
-    
-    DEBUG(fprintf(stderr, "var %s < x%d < %s\n", 
-		  kMinValueStr[i->second], 
-		  i->first, 
-		  kMaxValueStr[i->second]));
     x_expr_z3[i->first] = mk_var(ctx_z3, buff, int_ty_z3);
-    Z3_assert_cnstr(ctx_z3, Z3_mk_ge(ctx_z3, x_expr_z3[i->first], min_expr_z3[i->second]));
-    Z3_assert_cnstr(ctx_z3, Z3_mk_le(ctx_z3, x_expr_z3[i->first], max_expr_z3[i->second]));
+    min = Z3_mk_gt(ctx_z3, x_expr_z3[i->first], min_expr_z3[i->second]);
+    max = Z3_mk_lt(ctx_z3, x_expr_z3[i->first], max_expr_z3[i->second]);
+
+    // Z3_assert_cnstr(ctx_z3, min);
+    // Z3_assert_cnstr(ctx_z3, max);
+
+    DEBUG(fprintf(stderr, "MIN AST: %s\n", Z3_ast_to_string(ctx_z3, min)));
+    DEBUG(fprintf(stderr, "MAX AST: %s\n", Z3_ast_to_string(ctx_z3, max)));
   }
+
   Z3_ast zero_z3 = mk_int(ctx_z3, 0);
   assert(zero_z3);
 
@@ -624,6 +699,7 @@ bool YicesSolver::Solve(const map<var_t,type_t>& vars,
       */
       int pos = 0;
       Z3_ast pred_z3 = ParseStatement(ctx_z3, x_expr_z3, s, &pos);
+      DEBUG(fprintf(stderr, "CHECK AST: %s\n", Z3_ast_to_string(ctx_z3, pred_z3)));
       Z3_assert_cnstr(ctx_z3, pred_z3);
     }
   }
@@ -639,6 +715,8 @@ bool YicesSolver::Solve(const map<var_t,type_t>& vars,
         Z3_ast a, v;
         Z3_bool ok;
 
+	DEBUG(display_model(ctx_z3, stderr, model_z3));
+
         name = Z3_get_decl_name(ctx_z3, cnst);
         a = Z3_mk_app(ctx_z3, cnst, 0, 0);
         v = a;
@@ -653,6 +731,11 @@ bool YicesSolver::Solve(const map<var_t,type_t>& vars,
 		      idx, val));
 	soln->insert(make_pair(idx, val));
     }
+  } else if (success_z3 == Z3_L_FALSE) {
+    DEBUG(fprintf(stderr, "ERR:  fail to solve\n"));
+  } else {
+    DEBUG(fprintf(stderr, "ERR: unknown\n"));
+    DEBUG(display_model(ctx_z3, stderr, model_z3));
   }
 
   Z3_del_context(ctx_z3);

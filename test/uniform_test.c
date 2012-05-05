@@ -19,7 +19,7 @@ int main(void) {
   CREST_int(c);
   CREST_int(d);
 
-  if (a == 5) {
+  if (a > 5 && a < 10) {
     if (b == 19) {
       if (c == 7) {
         if (d == 4) {
@@ -29,5 +29,8 @@ int main(void) {
     }
   }
 
+  if (a < 9) {
+	  printf("well\n");
+  }
   return 0;
 }

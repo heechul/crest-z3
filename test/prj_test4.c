@@ -23,7 +23,7 @@ int main(void) {
     if (b == 19) {
       if (c == 7) {
         if (d == 4) {
-          printf("GOAL!\n");
+          printf("GOAL\n");
 	}
       }
     }

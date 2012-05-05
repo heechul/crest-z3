@@ -15,7 +15,6 @@
 #include <vector>
 
 #include "base/symbolic_interpreter.h"
-#include "base/yices_solver.h"
 
 using std::make_pair;
 using std::swap;
@@ -167,7 +166,7 @@ void SymbolicInterpreter::ApplyBinaryOp(id_t id, binary_op_t op, value_t value) 
 	*a.expr += *b.expr;
 	delete b.expr;
       }
-      fprintf(stderr, "ApplyBinOp:+: %s\n", a.expr->get_expr_str().c_str());
+      IFDEBUG(fprintf(stderr, "ApplyBinOp:+: %s\n", a.expr->get_expr_str().c_str()));
       break;
 
     case ops::SUBTRACT:
@@ -181,7 +180,7 @@ void SymbolicInterpreter::ApplyBinaryOp(id_t id, binary_op_t op, value_t value) 
 	*a.expr -= *b.expr;
 	delete b.expr;
       }
-      fprintf(stderr, "ApplyBinOp:-: %s\n", a.expr->get_expr_str().c_str());
+      IFDEBUG(fprintf(stderr, "ApplyBinOp:-: %s\n", a.expr->get_expr_str().c_str()));
       break;
 
     case ops::SHIFT_L:
@@ -190,7 +189,7 @@ void SymbolicInterpreter::ApplyBinaryOp(id_t id, binary_op_t op, value_t value) 
         *a.expr *= (1 << b.concrete);
       }
       delete b.expr;
-      fprintf(stderr, "ApplyBinOp:<<: %s\n", a.expr->get_expr_str().c_str());
+      IFDEBUG(fprintf(stderr, "ApplyBinOp:<<: %s\n", a.expr->get_expr_str().c_str()));
       break;
 
     case ops::MULTIPLY:
@@ -201,10 +200,10 @@ void SymbolicInterpreter::ApplyBinaryOp(id_t id, binary_op_t op, value_t value) 
 	*a.expr *= b.concrete;
       } else {
 	swap(a, b);
-	*a.expr *= b.concrete;
+	*a.expr *= *b.expr;
 	delete b.expr;
       }
-      fprintf(stderr, "ApplyBinOp:*: %s\n", a.expr->get_expr_str().c_str());
+      IFDEBUG(fprintf(stderr, "ApplyBinOp:*: %s\n", a.expr->get_expr_str().c_str()));
       break;
     case ops::DIVIDE:
       if (a.expr == NULL) {
@@ -217,7 +216,7 @@ void SymbolicInterpreter::ApplyBinaryOp(id_t id, binary_op_t op, value_t value) 
 	*a.expr /= b.concrete;
 	delete b.expr;
       }
-      fprintf(stderr, "ApplyBinOp:*: %s\n", a.expr->get_expr_str().c_str());
+      IFDEBUG(fprintf(stderr, "ApplyBinOp:*: %s\n", a.expr->get_expr_str().c_str()));
       break;
     case ops::MOD:
       if (a.expr == NULL) {
@@ -230,7 +229,7 @@ void SymbolicInterpreter::ApplyBinaryOp(id_t id, binary_op_t op, value_t value) 
 	*a.expr %= b.concrete;
 	delete b.expr;
       }
-      fprintf(stderr, "ApplyBinOp:*: %s\n", a.expr->get_expr_str().c_str());
+      IFDEBUG(fprintf(stderr, "ApplyBinOp:*: %s\n", a.expr->get_expr_str().c_str()));
       break;
     default:
       // Concrete operator.
