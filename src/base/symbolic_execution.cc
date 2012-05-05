@@ -14,6 +14,7 @@
 #include "base/symbolic_execution.h"
 
 #define DEBUG(x)
+#define MAX_LINE_BUF 1024
 
 namespace crest {
 
@@ -32,7 +33,7 @@ void SymbolicExecution::Swap(SymbolicExecution& se) {
 
 void SymbolicExecution::Serialize(string* s) const {
   typedef map<var_t,type_t>::const_iterator VarIt;
-  char buf[16];
+  char buf[32];
   size_t len = vars_.size();
 
   /* #vars */
@@ -52,9 +53,9 @@ void SymbolicExecution::Serialize(string* s) const {
 bool SymbolicExecution::Parse(istream& s) {
   // Read the inputs.
   size_t len;
-  char buf[256];
+  char buf[MAX_LINE_BUF];
 
-  s.getline(buf, 256);
+  s.getline(buf, MAX_LINE_BUF);
   sscanf(buf, "%d\n", &len);
 
   DEBUG(fprintf(stderr, "%s: #vars = %d\n", __FUNCTION__, len));
@@ -64,7 +65,7 @@ bool SymbolicExecution::Parse(istream& s) {
 
   for (size_t i = 0; i < len; i++) {
     int type, value;
-    s.getline(buf, 256);
+    s.getline(buf, MAX_LINE_BUF);
     sscanf(buf, "%d %d\n", &type, &value);
 
     vars_[i] = (type_t)type; /* var type */

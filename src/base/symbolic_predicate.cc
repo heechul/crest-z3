@@ -42,7 +42,7 @@ void SymbolicPred::AppendToString(string* s) const {
 }
 
 void SymbolicPred::Serialize(string* s) const {
-  char buf[8];
+  char buf[32];
   sprintf(buf, "%d\n", op_);
   s->append(string(buf));
   DEBUG(fprintf(stderr, "%s: op_=%d\n", __FUNCTION__, op_));

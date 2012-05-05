@@ -25,7 +25,9 @@ using std::set;
 
 #define DEBUG(x)
 
+#define USE_RANGE_CHECK 0
 #define USE_Z3 1
+
 #if USE_Z3
 #  include <z3.h>
 #endif
@@ -670,11 +672,12 @@ bool YicesSolver::Solve(const map<var_t,type_t>& vars,
     min = Z3_mk_gt(ctx_z3, x_expr_z3[i->first], min_expr_z3[i->second]);
     max = Z3_mk_lt(ctx_z3, x_expr_z3[i->first], max_expr_z3[i->second]);
 
-    // Z3_assert_cnstr(ctx_z3, min);
-    // Z3_assert_cnstr(ctx_z3, max);
-
+#if USE_RANGE_CHECK
+    Z3_assert_cnstr(ctx_z3, min);
+    Z3_assert_cnstr(ctx_z3, max);
     DEBUG(fprintf(stderr, "MIN AST: %s\n", Z3_ast_to_string(ctx_z3, min)));
     DEBUG(fprintf(stderr, "MAX AST: %s\n", Z3_ast_to_string(ctx_z3, max)));
+#endif
   }
 
   Z3_ast zero_z3 = mk_int(ctx_z3, 0);

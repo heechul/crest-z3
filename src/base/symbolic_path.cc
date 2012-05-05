@@ -13,6 +13,9 @@
 
 #define DEBUG(x)
 
+#define MAX_LINE_BUF 4096
+
+
 namespace crest {
 
 SymbolicPath::SymbolicPath() { }
@@ -89,16 +92,16 @@ bool SymbolicPath::Parse(istream& s) {
   typedef vector<size_t*>::iterator ConIdxIt;
   typedef vector<branch_id_t*>::iterator BranIt;
   size_t len;
-  char buf[256];
+  char buf[MAX_LINE_BUF];
 
   // read #branches
-  s.getline(buf, 256);
+  s.getline(buf, MAX_LINE_BUF);
   sscanf(buf, "%d", &len);
 
   DEBUG(fprintf(stderr, "#branches = %d\n", len));
   DEBUG(fprintf(stderr, "branch ids:\n"));  
   branches_.resize(len);
-  s.getline(buf, 256);
+  s.getline(buf, MAX_LINE_BUF);
   char *ptr = buf;
   for(size_t i = 0; i < len; i++) {
     int bid;
@@ -117,7 +120,7 @@ bool SymbolicPath::Parse(istream& s) {
     delete constraints_[i];
 
   // Read the path constraints.
-  s.getline(buf, 256);
+  s.getline(buf, MAX_LINE_BUF);
   sscanf(buf, "%d", &len);
   constraints_idx_.resize(len);
   constraints_.resize(len);
@@ -125,7 +128,7 @@ bool SymbolicPath::Parse(istream& s) {
   DEBUG(fprintf(stderr, "#constaints = %d\n", len));
   DEBUG(fprintf(stderr, "constraints idxes:\n"));  
 
-  s.getline(buf, 256);
+  s.getline(buf, MAX_LINE_BUF);
   ptr = buf;
   for(size_t i = 0; i < len; i++) {
     int cid;

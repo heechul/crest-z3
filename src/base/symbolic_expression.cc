@@ -13,6 +13,7 @@
 #include "base/symbolic_expression.h"
 
 #define DEBUG(x) 
+#define MAX_LINE_BUF 1024
 
 namespace crest {
 
@@ -72,13 +73,13 @@ void SymbolicExpr::Serialize(string* s) const {
 
 
 bool SymbolicExpr::Parse(istream& s) {
-  char buf[256];
+  char buf[MAX_LINE_BUF];
 
-  s.getline(buf, 256);
+  s.getline(buf, MAX_LINE_BUF);
   expr_str_ = string(buf);
   DEBUG(fprintf(stderr, "%s: %s\n", __FUNCTION__, expr_str_.c_str() ));
 
-  for (int i = 0; i < 256 && buf[i] != '\n'; i++) {
+  for (int i = 0; i < MAX_LINE_BUF && buf[i] != '\n'; i++) {
     if (buf[i] == 'x') {
       int var;
       sscanf(&buf[i+1], "%d", &var);

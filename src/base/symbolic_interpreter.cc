@@ -21,6 +21,7 @@ using std::swap;
 using std::vector;
 
 // #define DEBUG 0
+#define MAX_LINE_BUF 1024
 
 #ifdef DEBUG
 #define IFDEBUG(x) x
@@ -152,7 +153,7 @@ void SymbolicInterpreter::ApplyBinaryOp(id_t id, binary_op_t op, value_t value) 
   StackElem& a = *(stack_.rbegin()+1);
   StackElem& b = stack_.back();
 
-  char buf[128];
+  char buf[MAX_LINE_BUF];
 
   if (a.expr || b.expr) {
     switch (op) {
