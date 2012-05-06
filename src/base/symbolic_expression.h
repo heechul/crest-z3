@@ -58,9 +58,14 @@ class SymbolicExpr {
   // Arithmetic operators.
   const SymbolicExpr& operator+=(const SymbolicExpr& e);
   const SymbolicExpr& operator-=(const SymbolicExpr& e);
+  const SymbolicExpr& operator*=(const SymbolicExpr& e);
+  const SymbolicExpr& operator/=(const SymbolicExpr& e);
   const SymbolicExpr& operator+=(value_t c);
   const SymbolicExpr& operator-=(value_t c);
   const SymbolicExpr& operator*=(value_t c);
+  const SymbolicExpr& operator/=(value_t c);
+  const SymbolicExpr& operator%=(value_t c);
+
   bool operator==(const SymbolicExpr& e) const;
 
   // Accessors.
@@ -68,9 +73,13 @@ class SymbolicExpr {
   const map<var_t,value_t>& terms() const { return coeff_; }
   typedef map<var_t,value_t>::const_iterator TermIt;
 
+  string get_expr_str() const { return expr_str_; }
+
  private:
   value_t const_;
   map<var_t,value_t> coeff_;
+  
+  string expr_str_; // HEECHUL
 };
 
 }  // namespace crest

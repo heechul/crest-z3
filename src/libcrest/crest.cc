@@ -32,7 +32,7 @@ static int pre_symbolic;
 // those defined in base/basic_types.h.
 static const int kOpTable[] =
   { // binary arithmetic
-    ops::ADD, ops::SUBTRACT, ops::MULTIPLY, ops::CONCRETE, ops::CONCRETE,
+    ops::ADD, ops::SUBTRACT, ops::MULTIPLY, ops::DIVIDE, ops::MOD,
     // binary bitwise operators
     ops::CONCRETE, ops::CONCRETE, ops::CONCRETE, ops::SHIFT_L, ops::CONCRETE,
     // binary logical operators
