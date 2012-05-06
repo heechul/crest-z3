@@ -1,1 +1,36 @@
-This extension use Z3 from Microsoft as a SMT solver of CREST.
+crest-z3: CREST extension that supports non-linear arithmetic.
+
+Heechul Yun <heechul@illinois.edu>
+
+Original CREST does not support non-linear arithmetic operations
+as well as division and mod operators. One example of such program
+is as follows.
+
+#include <crest.h>
+#include <stdio.h>
+
+int main(int argc, char *argv[])
+{
+	int x, y;
+
+	CREST_int(x);
+	CREST_int(y);
+
+	if ( (y*y)%50 == x) {
+		if (x>y+10) {
+			printf("GOAL x=%d, y=%d\n", x, y);
+		}
+	}
+	return 0;
+}
+
+
+In original version, CREST will fail to find "GOAL" execution path
+because of y*y is not linear arithmetic and % is not supported operator.
+
+This extension, crest-z3, supports this example. More examples that
+can be explored by crest-z3 can be found in test/prj_test*.c
+
+All the usuage is the same as original CREST as all the changes are
+internal and not visible to users.
+
