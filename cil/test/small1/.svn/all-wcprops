@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 39
+/svn/!svn/ver/101/trunk/cil/test/small1
+END
+hello.c
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/101/trunk/cil/test/small1/hello.c
+END
+init.c
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/101/trunk/cil/test/small1/init.c
+END
+vararg1.c
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/101/trunk/cil/test/small1/vararg1.c
+END
+init1.c
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/101/trunk/cil/test/small1/init1.c
+END
+wchar1.c
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/101/trunk/cil/test/small1/wchar1.c
+END
+testharness.h
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/!svn/ver/101/trunk/cil/test/small1/testharness.h
+END
+func.c
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/101/trunk/cil/test/small1/func.c
+END

@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 31
+/svn/!svn/ver/101/trunk/cil/lib
+END
+TempFile.pm
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/!svn/ver/101/trunk/cil/lib/TempFile.pm
+END
+OutputFile.pm
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/!svn/ver/101/trunk/cil/lib/OutputFile.pm
+END
+Cilly.pm.in
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/!svn/ver/101/trunk/cil/lib/Cilly.pm.in
+END
+KeptFile.pm
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/!svn/ver/101/trunk/cil/lib/KeptFile.pm
+END

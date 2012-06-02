@@ -1,0 +1,125 @@
+K 25
+svn:wc:ra_dav:version-url
+V 27
+/svn/!svn/ver/102/trunk/cil
+END
+config.mk.in
+K 25
+svn:wc:ra_dav:version-url
+V 40
+/svn/!svn/ver/101/trunk/cil/config.mk.in
+END
+configure
+K 25
+svn:wc:ra_dav:version-url
+V 37
+/svn/!svn/ver/101/trunk/cil/configure
+END
+Makefile.in
+K 25
+svn:wc:ra_dav:version-url
+V 39
+/svn/!svn/ver/102/trunk/cil/Makefile.in
+END
+LICENSE
+K 25
+svn:wc:ra_dav:version-url
+V 35
+/svn/!svn/ver/101/trunk/cil/LICENSE
+END
+Makefile.msvc
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svn/!svn/ver/101/trunk/cil/Makefile.msvc
+END
+configure.in
+K 25
+svn:wc:ra_dav:version-url
+V 40
+/svn/!svn/ver/101/trunk/cil/configure.in
+END
+myocamlbuild.ml
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/!svn/ver/101/trunk/cil/myocamlbuild.ml
+END
+config.guess
+K 25
+svn:wc:ra_dav:version-url
+V 40
+/svn/!svn/ver/101/trunk/cil/config.guess
+END
+config.sub
+K 25
+svn:wc:ra_dav:version-url
+V 38
+/svn/!svn/ver/101/trunk/cil/config.sub
+END
+_tags
+K 25
+svn:wc:ra_dav:version-url
+V 33
+/svn/!svn/ver/101/trunk/cil/_tags
+END
+README
+K 25
+svn:wc:ra_dav:version-url
+V 34
+/svn/!svn/ver/101/trunk/cil/README
+END
+cil.spec
+K 25
+svn:wc:ra_dav:version-url
+V 36
+/svn/!svn/ver/101/trunk/cil/cil.spec
+END
+config.h.in
+K 25
+svn:wc:ra_dav:version-url
+V 39
+/svn/!svn/ver/101/trunk/cil/config.h.in
+END
+cil.itarget
+K 25
+svn:wc:ra_dav:version-url
+V 39
+/svn/!svn/ver/101/trunk/cil/cil.itarget
+END
+cil.spec.in
+K 25
+svn:wc:ra_dav:version-url
+V 39
+/svn/!svn/ver/101/trunk/cil/cil.spec.in
+END
+INSTALL
+K 25
+svn:wc:ra_dav:version-url
+V 35
+/svn/!svn/ver/101/trunk/cil/INSTALL
+END
+cil.odocl
+K 25
+svn:wc:ra_dav:version-url
+V 37
+/svn/!svn/ver/101/trunk/cil/cil.odocl
+END
+Makefile.gcc
+K 25
+svn:wc:ra_dav:version-url
+V 40
+/svn/!svn/ver/101/trunk/cil/Makefile.gcc
+END
+aclocal.m4
+K 25
+svn:wc:ra_dav:version-url
+V 38
+/svn/!svn/ver/101/trunk/cil/aclocal.m4
+END
+install-sh
+K 25
+svn:wc:ra_dav:version-url
+V 38
+/svn/!svn/ver/101/trunk/cil/install-sh
+END

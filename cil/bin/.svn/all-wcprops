@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 31
+/svn/!svn/ver/101/trunk/cil/bin
+END
+patcher.bat.in
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/101/trunk/cil/bin/patcher.bat.in
+END
+test-bad
+K 25
+svn:wc:ra_dav:version-url
+V 40
+/svn/!svn/ver/101/trunk/cil/bin/test-bad
+END
+patcher
+K 25
+svn:wc:ra_dav:version-url
+V 39
+/svn/!svn/ver/101/trunk/cil/bin/patcher
+END
+cilly.bat.in
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/!svn/ver/101/trunk/cil/bin/cilly.bat.in
+END
+teetwo
+K 25
+svn:wc:ra_dav:version-url
+V 38
+/svn/!svn/ver/101/trunk/cil/bin/teetwo
+END
+cilly
+K 25
+svn:wc:ra_dav:version-url
+V 37
+/svn/!svn/ver/101/trunk/cil/bin/cilly
+END
+CilConfig.pm.in
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/101/trunk/cil/bin/CilConfig.pm.in
+END

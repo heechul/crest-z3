@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 34
+/svn/!svn/ver/101/trunk/cil/debian
+END
+control
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/!svn/ver/101/trunk/cil/debian/control
+END
+compat
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svn/!svn/ver/101/trunk/cil/debian/compat
+END
+watch
+K 25
+svn:wc:ra_dav:version-url
+V 40
+/svn/!svn/ver/101/trunk/cil/debian/watch
+END
+changelog
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/!svn/ver/101/trunk/cil/debian/changelog
+END
+cil-dev.install
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/!svn/ver/101/trunk/cil/debian/cil-dev.install
+END
+copyright
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/!svn/ver/101/trunk/cil/debian/copyright
+END
+rules
+K 25
+svn:wc:ra_dav:version-url
+V 40
+/svn/!svn/ver/101/trunk/cil/debian/rules
+END
+cil.install
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/101/trunk/cil/debian/cil.install
+END
