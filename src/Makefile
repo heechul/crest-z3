@@ -1,19 +1,16 @@
-
-YICES_DIR=$(HOME)/Projects/crest-z3/yices-1.0.34
-Z3_DIR=$(HOME)/Projects/z3
-
+Z3_DIR=../z3
 CC=gcc
 CXX=g++ # $(CXX)
-CFLAGS = -fopenmp -I. -I$(YICES_DIR)/include -I$(Z3_DIR)/include -Wall -O2 -g
+CFLAGS = -fopenmp -I. -I$(YICES_DIR)/include -I$(Z3_DIR)/include -Wall -O2 -g -Wno-deprecated
 CXXFLAGS = $(CFLAGS)
-LDFLAGS = -L$(YICES_DIR)/lib -L$(Z3_DIR)/lib 
+LDFLAGS = -L$(YICES_DIR)/lib -L$(Z3_DIR)/lib
 
-LOADLIBES = -lyices -lz3 -lgmp -ldl -lpthread 
+LOADLIBES = -lz3 -lgmp -ldl -lpthread
 
 BASE_LIBS = base/basic_types.o base/symbolic_execution.o \
             base/symbolic_interpreter.o base/symbolic_path.o \
             base/symbolic_predicate.o base/symbolic_expression.o \
-            base/yices_solver.o
+            base/z3_solver.o
 
 
 all: libcrest/libcrest.a run_crest/run_crest \

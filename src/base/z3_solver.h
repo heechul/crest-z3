@@ -22,7 +22,7 @@ using std::vector;
 
 namespace crest {
 
-class YicesSolver {
+class Z3Solver {
  public:
   static bool IncrementalSolve(const vector<value_t>& old_soln,
 			       const map<var_t,type_t>& vars,

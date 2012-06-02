@@ -42,7 +42,7 @@ void SymbolicExecution::Serialize(string* s) const {
 
   /* var_type var_value */
   for (VarIt i = vars_.begin(); i != vars_.end(); ++i) {
-    sprintf(buf, "%d %d\n", i->second, inputs_[i->first]); /* type, value */
+    sprintf(buf, "%d %lld\n", i->second, inputs_[i->first]); /* type, value */
     s->append(string(buf));
   }
 
@@ -64,14 +64,15 @@ bool SymbolicExecution::Parse(istream& s) {
   inputs_.resize(len);
 
   for (size_t i = 0; i < len; i++) {
-    int type, value;
+    int type;
+    long long int value;
     s.getline(buf, MAX_LINE_BUF);
-    sscanf(buf, "%d %d\n", &type, &value);
+    sscanf(buf, "%d %lld\n", &type, &value);
 
     vars_[i] = (type_t)type; /* var type */
     inputs_[i] = value; /* var value */
 
-    DEBUG(fprintf(stderr, "%s: var%d: type=%d, value=%d\n", 
+    DEBUG(fprintf(stderr, "%s: var%d: type=%d, value=%lld\n", 
 		  __FUNCTION__, i, type, value));
   }
 
