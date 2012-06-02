@@ -1,7 +1,7 @@
 Z3_DIR=../z3
 CC=gcc
 CXX=g++ # $(CXX)
-CFLAGS = -fopenmp -I. -I$(YICES_DIR)/include -I$(Z3_DIR)/include -Wall -O2 -g -Wno-deprecated
+CFLAGS = -fopenmp -I. -I$(YICES_DIR)/include -I$(Z3_DIR)/include -Wall -O2 -g -Wno-deprecated -fpermissive -Wformat-security
 CXXFLAGS = $(CFLAGS)
 LDFLAGS = -L$(YICES_DIR)/lib -L$(Z3_DIR)/lib
 
