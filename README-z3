@@ -34,3 +34,16 @@ can be explored by crest-z3 can be found in test/prj_test*.c
 All the usuage is the same as original CREST as all the changes are
 internal and not visible to users.
 
+
+SETUP
+=====
+
+CREST-z3 depends on Z3, an SMT solver tool and library available at
+http://research.microsoft.com/en-us/um/redmond/projects/z3/download.html
+
+CREST-z3 includes 32bit binary version of z3 4.0 installation under z3/
+directory. To use different version of z3, you can simply replace the
+directory.
+
+Other setup is the same as original CREST. So simply "make" under src/
+directory.
