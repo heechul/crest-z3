@@ -510,8 +510,15 @@ static Z3_ast ParseStatement(Z3_context &ctx, map<var_t,Z3_ast>& vars, string& s
     *pos = *pos + (end - start);
     string val = stmt.substr(start, end-start);
     ret = Z3_mk_numeral(ctx, const_cast<char*>(val.c_str()), ty);
+  } else if (stmt[*pos] == '-' || stmt[*pos] == '+') {
+    /* unary */
+    Z3_sort ty = Z3_mk_int_sort(ctx);
+    int start = *pos;
+    int end = stmt.find(' ', start) + 1;
+    *pos = *pos + (end - start);
+    string val = stmt.substr(start, end-start);
+    ret = Z3_mk_numeral(ctx, const_cast<char*>(val.c_str()), ty);
   }
-
   DEBUG(fprintf(stderr, "AST: %s\n", Z3_ast_to_string(ctx, ret)));
   return ret;
 }
