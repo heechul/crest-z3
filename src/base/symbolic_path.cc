@@ -91,7 +91,7 @@ bool SymbolicPath::Parse(istream& s) {
   typedef vector<SymbolicPred*>::iterator ConIt;
   typedef vector<size_t*>::iterator ConIdxIt;
   typedef vector<branch_id_t*>::iterator BranIt;
-  size_t len;
+  int len;
   char buf[MAX_LINE_BUF];
 
   // read #branches
@@ -103,7 +103,7 @@ bool SymbolicPath::Parse(istream& s) {
   branches_.resize(len);
   s.getline(buf, MAX_LINE_BUF);
   char *ptr = buf;
-  for(size_t i = 0; i < len; i++) {
+  for(int i = 0; i < len; i++) {
     int bid;
     sscanf(ptr, "%d", &bid);
     DEBUG(fprintf(stderr, "%d ", bid));
@@ -130,7 +130,7 @@ bool SymbolicPath::Parse(istream& s) {
 
   s.getline(buf, MAX_LINE_BUF);
   ptr = buf;
-  for(size_t i = 0; i < len; i++) {
+  for(int i = 0; i < len; i++) {
     int cid;
     sscanf(ptr, "%d", &cid);
     DEBUG(fprintf(stderr, "%d ", cid));
