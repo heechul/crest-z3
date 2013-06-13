@@ -41,7 +41,7 @@ SymbolicExpr::SymbolicExpr(const SymbolicExpr& e)
 
 void SymbolicExpr::Negate() {
   const_ = -const_;
-  expr_str_ = "( - 0 " + expr_str_ + ")";
+  expr_str_ = "(- 0 " + expr_str_ + " )";
 }
 
 
