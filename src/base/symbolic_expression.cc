@@ -79,7 +79,7 @@ bool SymbolicExpr::Parse(istream& s) {
   expr_str_ = string(buf);
   DEBUG(fprintf(stderr, "%s: %s\n", __FUNCTION__, expr_str_.c_str() ));
 
-  for (int i = 0; i < MAX_LINE_BUF && buf[i] != '\n'; i++) {
+  for (int i = 0; i < MAX_LINE_BUF && buf[i] != '\0'; i++) {
     if (buf[i] == 'x') {
       int var;
       sscanf(&buf[i+1], "%d", &var);
