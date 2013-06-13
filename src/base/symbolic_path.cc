@@ -13,7 +13,7 @@
 
 #define DEBUG(x)
 
-#define MAX_LINE_BUF 4096
+#define MAX_LINE_BUF 4096*16
 
 
 namespace crest {
