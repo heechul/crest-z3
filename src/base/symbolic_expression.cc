@@ -83,7 +83,7 @@ bool SymbolicExpr::Parse(istream& s) {
     if (buf[i] == 'x') {
       int var;
       sscanf(&buf[i+1], "%d", &var);
-      if (var >= 0 && var < 128) /* valid variable range */
+      if (var >= 0) /* valid variable range. 'assert(coeff_.size() < 128);' could be added to valid the range */
 	coeff_[var] = 1;
     }
   }
